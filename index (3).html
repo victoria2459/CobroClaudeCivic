@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Team · Billing</title>
+<style>
+  :root {
+    --civic: #185FA5; --civic-light: #E6F1FB;
+    --fonselp: #0F6E56; --fonselp-light: #E1F5EE;
+    --gray: #f5f4f1; --border: #e2e0d8;
+    --text: #1a1a18; --muted: #6b6a65; --white: #ffffff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Georgia', serif; background: var(--gray); color: var(--text); min-height: 100vh; }
+  header { background: var(--white); border-bottom: 1px solid var(--border); padding: 1.25rem 2rem; display: flex; align-items: center; justify-content: space-between; }
+  .logo { font-size: 1rem; letter-spacing: 0.08em; color: var(--muted); text-transform: uppercase; font-family: monospace; }
+  .logo span { color: var(--text); font-weight: bold; }
+  .header-links { display: flex; gap: 0.5rem; align-items: center; }
+  .sheet-link { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.72rem; color: var(--muted); font-family: monospace; text-decoration: none; border: 1px solid var(--border); border-radius: 5px; padding: 0.3rem 0.65rem; transition: border-color 0.15s; }
+  .sheet-link:hover { border-color: var(--civic); color: var(--civic); }
+  #sheet-status { font-size: 0.7rem; font-family: monospace; color: var(--muted); }
+  main { max-width: 960px; margin: 0 auto; padding: 2rem; }
+  .summary { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 2rem; }
+  .card { background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem 1.5rem; }
+  .card.civic { border-top: 3px solid var(--civic); }
+  .card.fonselp { border-top: 3px solid var(--fonselp); }
+  .card.total { border-top: 3px solid var(--text); }
+  .card-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 0.4rem; font-family: monospace; }
+  .card-amount { font-size: 2rem; font-weight: bold; }
+  .card.civic .card-amount { color: var(--civic); }
+  .card.fonselp .card-amount { color: var(--fonselp); }
+  .card-sub { font-size: 0.75rem; color: var(--muted); margin-top: 0.25rem; font-family: monospace; }
+  .bar-wrap { height: 4px; background: var(--gray); border-radius: 2px; margin-top: 0.75rem; overflow: hidden; }
+  .section-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); font-family: monospace; margin: 2rem 0 0.75rem; }
+  .members-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 2rem; }
+  .org-block { background: var(--white); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .org-header { padding: 0.75rem 1rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
+  .org-header.civic { background: var(--civic-light); }
+  .org-header.fonselp { background: var(--fonselp-light); }
+  .org-name { font-size: 0.85rem; font-weight: bold; }
+  .org-header.civic .org-name { color: var(--civic); }
+  .org-header.fonselp .org-name { color: var(--fonselp); }
+  .org-count { font-size: 0.75rem; color: var(--muted); font-family: monospace; }
+  .member-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 1rem; border-bottom: 1px solid var(--border); font-size: 0.82rem; }
+  .member-row:last-child { border-bottom: none; }
+  .avatar { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: bold; flex-shrink: 0; font-family: monospace; }
+  .av-civic { background: #B5D4F4; color: var(--civic); }
+  .av-fonselp { background: #9FE1CB; color: var(--fonselp); }
+  .member-name { flex: 1; }
+  .seat-badge { font-size: 0.65rem; padding: 2px 7px; border-radius: 3px; font-family: monospace; text-transform: uppercase; letter-spacing: 0.05em; }
+  .premium { background: #EEEDFE; color: #3C3489; }
+  .standard { background: #F1EFE8; color: #5F5E5A; }
+  .invoices { background: var(--white); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 2rem; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+  thead { background: var(--gray); }
+  th { text-align: left; padding: 0.6rem 1rem; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); font-family: monospace; font-weight: normal; border-bottom: 1px solid var(--border); }
+  td { padding: 0.55rem 1rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fafaf8; }
+  .inv-num { color: var(--muted); font-family: monospace; }
+  .type-badge { font-size: 0.62rem; padding: 2px 6px; border-radius: 3px; font-family: monospace; white-space: nowrap; }
+  .type-seats { background: #E6F1FB; color: #185FA5; }
+  .type-extra { background: #FAEEDA; color: #633806; }
+  .type-adjust { background: #F1EFE8; color: #5F5E5A; }
+  .amt { font-family: monospace; font-weight: bold; }
+  .amt-civic { color: var(--civic); }
+  .amt-fonselp { color: var(--fonselp); }
+  .amt-zero { color: #ccc; font-weight: normal; }
+  .approval-section { background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 2rem; }
+  .approval-title { font-size: 0.85rem; font-weight: bold; margin-bottom: 0.5rem; }
+  .approval-sub { font-size: 0.78rem; color: var(--muted); margin-bottom: 1.25rem; font-family: monospace; }
+  .approval-form { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end; }
+  .field { display: flex; flex-direction: column; gap: 0.3rem; }
+  .field label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-family: monospace; }
+  .field select, .field input { border: 1px solid var(--border); border-radius: 6px; padding: 0.45rem 0.75rem; font-size: 0.82rem; background: var(--white); font-family: inherit; color: var(--text); }
+  .btn-approve { background: var(--text); color: var(--white); border: none; border-radius: 6px; padding: 0.5rem 1.25rem; font-size: 0.82rem; cursor: pointer; font-family: monospace; letter-spacing: 0.05em; transition: opacity 0.15s; }
+  .btn-approve:hover { opacity: 0.8; }
+  .btn-reload { background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 6px; padding: 0.3rem 0.75rem; font-size: 0.72rem; cursor: pointer; font-family: monospace; transition: all 0.15s; }
+  .btn-reload:hover { border-color: var(--civic); color: var(--civic); }
+  .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--text); color: var(--white); padding: 0.75rem 1.25rem; border-radius: 8px; font-family: monospace; font-size: 0.82rem; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+  .loading { text-align: center; padding: 2rem; color: var(--muted); font-family: monospace; font-size: 0.82rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><span>Claude</span> · billing compartido</div>
+  <div class="header-links">
+    <span id="sheet-status">Cargando...</span>
+    <button class="btn-reload" onclick="loadSheet()">↻ Actualizar</button>
+    <a class="sheet-link" href="https://docs.google.com/spreadsheets/d/1z8cRMq_avEwkHKjDlxBlylP40xLHMrTXVCTaKib9ipE" target="_blank">📊 Facturas</a>
+    <a class="sheet-link" href="https://docs.google.com/spreadsheets/d/1qDa9TwLQkAGGG-yS7OfCTksOqLc9J71SsDpxIqYVD3s" target="_blank">✅ Aprobaciones</a>
+  </div>
+</header>
+
+<main>
+
+  <p class="section-title">Resumen acumulado histórico</p>
+  <div class="summary">
+    <div class="card civic">
+      <div class="card-label">Civic House</div>
+      <div class="card-amount amt-civic" id="total-civic-amt">$0.00</div>
+      <div class="card-sub" id="total-civic-pct">— %</div>
+      <div class="bar-wrap"><div id="bar-civic" style="height:100%;background:var(--civic);border-radius:2px;width:0%"></div></div>
+    </div>
+    <div class="card fonselp">
+      <div class="card-label">Fonselp</div>
+      <div class="card-amount" style="color:var(--fonselp)" id="total-fonselp-amt">$0.00</div>
+      <div class="card-sub" id="total-fonselp-pct">— %</div>
+      <div class="bar-wrap"><div id="bar-fonselp" style="height:100%;background:var(--fonselp);border-radius:2px;width:0%"></div></div>
+    </div>
+    <div class="card total">
+      <div class="card-label">Total cobrado</div>
+      <div class="card-amount" id="total-all-amt">$0.00</div>
+      <div class="card-sub" id="total-invoices-count">— facturas</div>
+    </div>
+  </div>
+
+  <p class="section-title">Miembros</p>
+  <div class="members-grid">
+    <div class="org-block">
+      <div class="org-header civic">
+        <span class="org-name">Civic House</span>
+        <span class="org-count">3 miembros · $24/mes base</span>
+      </div>
+      <div class="member-row"><div class="avatar av-civic">CE</div><span class="member-name">Cecilia</span><span class="seat-badge standard">Standard</span></div>
+      <div class="member-row"><div class="avatar av-civic">DI</div><span class="member-name">Diana</span><span class="seat-badge standard">Standard</span></div>
+      <div class="member-row"><div class="avatar av-civic">VI</div><span class="member-name">Vicky</span><span class="seat-badge standard">Standard</span></div>
+    </div>
+    <div class="org-block">
+      <div class="org-header fonselp">
+        <span class="org-name">Fonselp</span>
+        <span class="org-count">11 miembros · $176/mes base</span>
+      </div>
+      <div class="member-row"><div class="avatar av-fonselp">MA</div><span class="member-name">Matías (owner)</span><span class="seat-badge premium">Premium</span></div>
+      <div class="member-row"><div class="avatar av-fonselp">CI</div><span class="member-name">Cintia</span><span class="seat-badge premium">Premium</span></div>
+      <div class="member-row"><div class="avatar av-fonselp">MB</div><span class="member-name">Matias B.</span><span class="seat-badge premium">Premium</span></div>
+      <div class="member-row"><div class="avatar av-fonselp">GO</div><span class="member-name">Gon</span><span class="seat-badge standard">Standard</span></div>
+      <div class="member-row"><div class="avatar av-fonselp">TO</div><span class="member-name">Tomás</span><span class="seat-badge standard">Standard</span></div>
+      <div class="member-row"><div class="avatar av-fonselp">EU</div><span class="member-name">Eugenia</span><span class="seat-badge standard">Standard</span></div>
+      <div class="member-row"><div class="avatar av-fonselp">GR</div><span class="member-name">Gri</span><span class="seat-badge standard">Standard</span></div>
+      <div class="member-row"><div class="avatar av-fonselp">LE</div><span class="member-name">Leo</span><span class="seat-badge standard">Standard</span></div>
+      <div class="member-row"><div class="avatar av-fonselp">PE</div><span class="member-name">Pepa</span><span class="seat-badge standard">Standard</span></div>
+      <div class="member-row"><div class="avatar av-fonselp">SI</div><span class="member-name">Silvana</span><span class="seat-badge standard">Standard</span></div>
+      <div class="member-row"><div class="avatar av-fonselp">GA</div><span class="member-name">Gaspar</span><span class="seat-badge standard">Standard</span></div>
+    </div>
+  </div>
+
+  <p class="section-title">Facturas y reparto <span style="font-weight:normal;text-transform:none;letter-spacing:0">— se actualiza solo desde Google Sheets</span></p>
+  <div class="invoices">
+    <table>
+      <thead>
+        <tr>
+          <th>Fecha</th><th>Nº</th><th>Tipo</th><th>Descripción</th>
+          <th style="text-align:right">Total</th>
+          <th style="text-align:right">Civic</th>
+          <th style="text-align:right">Fonselp</th>
+        </tr>
+      </thead>
+      <tbody id="invoice-tbody"><tr><td colspan="7" class="loading">Cargando facturas...</td></tr></tbody>
+    </table>
+  </div>
+
+  <p class="section-title">Registrar aprobación de uso adicional</p>
+  <div class="approval-section">
+    <div class="approval-title">¿Aprobaste una solicitud de uso adicional?</div>
+    <div class="approval-sub">Registralo acá. Queda guardado en el historial de esta sesión.</div>
+    <div class="approval-form">
+      <div class="field">
+        <label>Quién aprueba</label>
+        <select id="approver">
+          <option value="">— elegí —</option>
+          <option value="Vicky · Civic">Vicky · Civic</option>
+          <option value="Matías · Fonselp">Matías · Fonselp</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Para quién</label>
+        <select id="beneficiary">
+          <option value="">— miembro —</option>
+          <optgroup label="Fonselp">
+            <option>Matías (owner)</option><option>Cintia</option><option>Matias B.</option>
+            <option>Gon</option><option>Tomás</option><option>Eugenia</option>
+            <option>Gri</option><option>Leo</option><option>Pepa</option>
+            <option>Silvana</option><option>Gaspar</option>
+          </optgroup>
+          <optgroup label="Civic House">
+            <option>Cecilia</option><option>Diana</option><option>Vicky</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="field">
+        <label>Monto USD</label>
+        <input type="number" id="amount" placeholder="0.00" min="0" step="0.01" style="width:100px">
+      </div>
+      <div class="field">
+        <label>Notas (opcional)</label>
+        <input type="text" id="notes-input" placeholder="ej: extra usage semanal" style="width:180px">
+      </div>
+      <button class="btn-approve" onclick="registerApproval()">✓ Aprobé este uso</button>
+    </div>
+  </div>
+
+  <p class="section-title">Historial de aprobaciones</p>
+  <div class="invoices">
+    <table>
+      <thead>
+        <tr><th>Fecha</th><th>Hora</th><th>Aprobado por</th><th>Org</th><th>Para</th><th style="text-align:right">Monto</th><th>Notas</th></tr>
+      </thead>
+      <tbody id="log-tbody">
+        <tr><td colspan="7" style="color:#bbb;font-family:monospace;text-align:center;padding:1.5rem">Sin registros aún</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+const SHEET_ID = '1z8cRMq_avEwkHKjDlxBlylP40xLHMrTXVCTaKib9ipE';
+const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
+let INVOICES = [];
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  return lines.slice(1).map(line => {
+    const cols = [];
+    let cur = '', inQ = false;
+    for (let c of line) {
+      if (c === '"') { inQ = !inQ; }
+      else if (c === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
+      else { cur += c; }
+    }
+    cols.push(cur.trim());
+    const typeRaw = (cols[2] || '').toLowerCase();
+    let type = 'adjust';
+    if (typeRaw === 'seats') type = 'seats';
+    else if (typeRaw.includes('extra') || typeRaw.includes('prepaid') || typeRaw.includes('auto')) type = 'extra';
+    return {
+      date: cols[0] || '',
+      num: String(cols[1] || '').padStart(4, '0'),
+      type,
+      desc: cols[3] || '',
+      total: parseFloat(cols[4]) || 0,
+      civic: parseFloat(cols[9]) || 0,
+      fonselp: parseFloat(cols[10]) || 0,
+    };
+  }).filter(r => r.desc);
+}
+
+function renderTotals() {
+  const totalCivic = INVOICES.reduce((s, r) => s + r.civic, 0);
+  const totalFonselp = INVOICES.reduce((s, r) => s + r.fonselp, 0);
+  const total = totalCivic + totalFonselp;
+  const pctCivic = total > 0 ? Math.round(totalCivic / total * 100) : 0;
+  const pctFonselp = total > 0 ? Math.round(totalFonselp / total * 100) : 0;
+  document.getElementById('total-civic-amt').textContent = '$' + totalCivic.toFixed(2);
+  document.getElementById('total-fonselp-amt').textContent = '$' + totalFonselp.toFixed(2);
+  document.getElementById('total-all-amt').textContent = '$' + total.toFixed(2);
+  document.getElementById('total-civic-pct').textContent = `${pctCivic}% del total`;
+  document.getElementById('total-fonselp-pct').textContent = `${pctFonselp}% del total`;
+  document.getElementById('total-invoices-count').textContent = `${INVOICES.length} facturas · Feb–May 2026`;
+  document.getElementById('bar-civic').style.width = pctCivic + '%';
+  document.getElementById('bar-fonselp').style.width = pctFonselp + '%';
+}
+
+function renderInvoices() {
+  const tbody = document.getElementById('invoice-tbody');
+  if (!INVOICES.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="loading">Sin datos</td></tr>';
+    return;
+  }
+  tbody.innerHTML = INVOICES.map(inv => {
+    const typeClass = inv.type === 'seats' ? 'type-seats' : inv.type === 'extra' ? 'type-extra' : 'type-adjust';
+    const typeLabel = inv.type === 'seats' ? 'Seats' : inv.type === 'extra' ? 'Extra uso' : 'Ajuste';
+    const civicAmt = inv.civic > 0 ? `<span class="amt amt-civic">$${inv.civic.toFixed(2)}</span>` : '<span class="amt-zero">—</span>';
+    const fonAmt = inv.fonselp > 0 ? `<span class="amt amt-fonselp">$${inv.fonselp.toFixed(2)}</span>` : '<span class="amt-zero">—</span>';
+    return `<tr>
+      <td style="color:var(--muted);font-family:monospace;font-size:0.75rem">${inv.date}</td>
+      <td class="inv-num">${inv.num}</td>
+      <td><span class="type-badge ${typeClass}">${typeLabel}</span></td>
+      <td>${inv.desc}</td>
+      <td style="text-align:right;font-family:monospace;font-weight:bold">$${inv.total.toFixed(2)}</td>
+      <td style="text-align:right">${civicAmt}</td>
+      <td style="text-align:right">${fonAmt}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function loadSheet() {
+  const status = document.getElementById('sheet-status');
+  status.textContent = 'Actualizando...';
+  status.style.color = 'var(--muted)';
+  try {
+    const res = await fetch(SHEET_URL + '&t=' + Date.now());
+    if (!res.ok) throw new Error();
+    const text = await res.text();
+    INVOICES = parseCSV(text);
+    const now = new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+    status.textContent = `✓ ${INVOICES.length} facturas · ${now}`;
+    status.style.color = 'var(--fonselp)';
+    renderInvoices();
+    renderTotals();
+  } catch(e) {
+    status.textContent = '⚠ Sin conexión a Sheets';
+    status.style.color = '#854F0B';
+  }
+}
+
+const LOG_KEY = 'approval_log_v1';
+function getLog() { try { return JSON.parse(localStorage.getItem(LOG_KEY)) || []; } catch { return []; } }
+function saveLog(log) { localStorage.setItem(LOG_KEY, JSON.stringify(log)); }
+
+function renderLog() {
+  const log = getLog();
+  const tbody = document.getElementById('log-tbody');
+  if (!log.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="color:#bbb;font-family:monospace;text-align:center;padding:1.5rem">Sin registros aún</td></tr>';
+    return;
+  }
+  tbody.innerHTML = [...log].reverse().map(e => {
+    const cls = e.org === 'Civic' ? 'amt-civic' : 'amt-fonselp';
+    return `<tr>
+      <td style="font-family:monospace;color:var(--muted)">${e.date}</td>
+      <td style="font-family:monospace;color:var(--muted)">${e.time}</td>
+      <td class="${cls}" style="font-family:monospace;font-weight:bold">${e.approver}</td>
+      <td><span class="type-badge ${e.org === 'Civic' ? 'type-seats' : 'type-extra'}">${e.org}</span></td>
+      <td>${e.beneficiary}</td>
+      <td style="text-align:right;font-family:monospace;font-weight:bold">$${parseFloat(e.amount).toFixed(2)}</td>
+      <td style="color:var(--muted);font-size:0.72rem">${e.notes || '—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function registerApproval() {
+  const approver = document.getElementById('approver').value;
+  const beneficiary = document.getElementById('beneficiary').value;
+  const amount = document.getElementById('amount').value;
+  const notes = document.getElementById('notes-input').value;
+  if (!approver || !beneficiary || !amount || parseFloat(amount) <= 0) {
+    showToast('⚠ Completá todos los campos obligatorios');
+    return;
+  }
+  const org = approver.includes('Civic') ? 'Civic' : 'Fonselp';
+  const now = new Date();
+  const entry = {
+    date: now.toLocaleDateString('es-AR'),
+    time: now.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }),
+    approver, org, beneficiary,
+    amount: parseFloat(amount).toFixed(2),
+    notes
+  };
+  const log = getLog();
+  log.push(entry);
+  saveLog(log);
+  renderLog();
+  document.getElementById('approver').value = '';
+  document.getElementById('beneficiary').value = '';
+  document.getElementById('amount').value = '';
+  document.getElementById('notes-input').value = '';
+  showToast(`✓ Registrado — ${org} aprobó $${entry.amount} para ${entry.beneficiary}`);
+}
+
+loadSheet();
+renderLog();
+</script>
+</body>
+</html>
